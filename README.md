@@ -12,6 +12,13 @@
 sudo apt install libusb-1.0-0 python3
 ```
 
+**macOS** (Apple Silicon and Intel)
+
+No extra packages are needed: `tools/spd_dump-darwin` is a universal binary with libusb built in, and `python3` comes with the Xcode Command Line Tools (`xcode-select --install`) or Homebrew.
+
+- On Apple Silicon, macOS asks *"Allow accessory to connect?"* the first time a new USB device is plugged in. The device only stays in flashing mode for a short window, so either be ready to click **Allow** immediately, or first set **System Settings → Privacy & Security → Allow accessories to connect** to *Automatically when unlocked*.
+- `sudo` is still required: macOS attaches its own driver to the device and only root can detach it.
+
 ---
 
 ## Instructions
@@ -23,6 +30,20 @@ sudo apt install libusb-1.0-0 python3
 3. Open a terminal in the folder containing this repository and run `unpack-and-flash.sh`.
     1. Follow the instructions printed in your terminal from this point.
     2. Your device should reboot into GammaOSNext when done.
+
+---
+
+## Rebuilding `spd_dump` for macOS
+
+`tools/spd_dump-darwin` is built from [spreadtrum_flash](https://github.com/ilyakurdyukov/spreadtrum_flash) (commit `40c4ab9`) with libusb 1.0.29 linked statically. To rebuild it for your own architecture:
+
+```bash
+brew install libusb
+git clone https://github.com/ilyakurdyukov/spreadtrum_flash
+cd spreadtrum_flash
+cc -O2 -std=c99 -DUSE_LIBUSB=1 -I"$(brew --prefix libusb)/include" -o spd_dump-darwin spd_dump.c \
+    "$(brew --prefix libusb)/lib/libusb-1.0.a" -framework IOKit -framework CoreFoundation -framework Security -lobjc
+```
 
 ---
 

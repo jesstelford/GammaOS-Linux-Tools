@@ -12,6 +12,8 @@ get_longest() {
     echo "$longest"
 }
 
+shopt -s nullglob
+
 pacs=( *.pac )
 if (( ${#pacs[@]} == 0 )); then
   echo "No .pac file found in: $(pwd)" >&2
@@ -40,13 +42,13 @@ fi
 
 ubootafiles=( uboot_a.img* )
 ubootbfiles=( uboot_b.img* )
-if [[ $ubootafiles != "uboot_a.img*" && $ubootbfiles != "uboot_b.img*" ]]; then
+if (( ${#ubootafiles[@]} > 0 && ${#ubootbfiles[@]} > 0 )); then
     ubootafile=$(get_longest "${ubootafiles[@]}")
     ubootbfile=$(get_longest "${ubootbfiles[@]}")
-elif [[ $ubootafiles != "uboot_a.img*" ]]; then
+elif (( ${#ubootafiles[@]} > 0 )); then
     ubootafile=$(get_longest "${ubootafiles[@]}")
     ubootbfile=$ubootafile
-elif [[ $ubootbfiles != "uboot_b.img*" ]]; then
+elif (( ${#ubootbfiles[@]} > 0 )); then
     ubootafile=$(get_longest "${ubootbfiles[@]}")
     ubootbfile=$ubootafile
 else
@@ -94,7 +96,18 @@ read -n 1 -r -s -p $'\nYou are about to be asked for your sudo password to preve
 
 cd ../tools
 
-sudo ./spd_dump --wait 600 \
+case "$(uname -s)" in
+    Darwin)
+        spd=./spd_dump-darwin
+        # Gatekeeper blocks quarantined binaries (e.g. when this repo was downloaded as a zip)
+        xattr -d com.apple.quarantine "$spd" 2>/dev/null
+        ;;
+    *)
+        spd=./spd_dump
+        ;;
+esac
+
+sudo "$spd" --wait 600 \
     exec_addr 0x65012f48 \
     fdl ../unisoc-blobs/fdl1-boot.bin 0x65000800 \
     fdl ../unisoc-blobs/fdl2-cboot.bin 0xb4fffe00 \
@@ -105,7 +118,7 @@ sudo ./spd_dump --wait 600 \
 
 read -n 1 -r -s -p $'\nBootloader unlocked! Wait for your device to get to the charging screen.\nThen, please unplug your device and get ready to replug it while holding the BACK button again.\nPress any key when you are ready...\n'
 
-sudo ./spd_dump --wait 600 \
+sudo "$spd" --wait 600 \
     fdl ../extracted/fdl1-dl.bin 0x65000800 \
     fdl ../extracted/fdl2-dl.bin 0xb4fffe00 \
     exec \
