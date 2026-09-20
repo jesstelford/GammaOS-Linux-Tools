@@ -23,7 +23,7 @@ fi
 fwfile="$(ls -t -- "${pacs[@]}" | head -n 1)"
 echo "Using PAC: $fwfile"
 
-rm -r extracted
+rm -rf extracted
 mkdir -p extracted
 cd extracted
 
@@ -114,7 +114,8 @@ sudo "$spd" --wait 600 \
     fdl ../unisoc-blobs/trustos_a.bin 0xbd05fe00 \
     fdl ../unisoc-blobs/teecfg_a.bin 0xbd03fe00 \
     fdl ../unisoc-blobs/sml_a.bin 0xbcfffe00 \
-    exec
+    exec \
+    || { echo "Bootloader unlock failed! Not continuing." >&2; exit 1; }
 
 read -n 1 -r -s -p $'\nBootloader unlocked! Wait for your device to get to the charging screen.\nThen, please unplug your device and get ready to replug it while holding the BACK button again.\nPress any key when you are ready...\n'
 
@@ -148,5 +149,8 @@ sudo "$spd" --wait 600 \
     e userdata \
     set_active a \
     firstmode 0 \
-    reset
+    reset \
+    || { echo "Flashing failed! Re-run this script to try again." >&2; exit 1; }
 
+echo
+echo "Done! Your device should now reboot into GammaOSNext."

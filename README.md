@@ -35,14 +35,16 @@ No extra packages are needed: `tools/spd_dump-darwin` is a universal binary with
 
 ## Rebuilding `spd_dump` for macOS
 
-`tools/spd_dump-darwin` is built from [spreadtrum_flash](https://github.com/ilyakurdyukov/spreadtrum_flash) (commit `40c4ab9`) with libusb 1.0.29 linked statically. To rebuild it for your own architecture:
+Both `tools/spd_dump` (Linux) and `tools/spd_dump-darwin` (macOS) are built from [TomKing062's fork of spreadtrum_flash](https://github.com/TomKing062/spreadtrum_flash) at commit `d24c21a` — the fork adds the `exec_addr`, `set_active` and `firstmode` commands this script depends on. The macOS build has libusb 1.0.29 linked statically. To rebuild it for your own architecture:
 
 ```bash
 brew install libusb
-git clone https://github.com/ilyakurdyukov/spreadtrum_flash
+git clone https://github.com/TomKing062/spreadtrum_flash
 cd spreadtrum_flash
-cc -O2 -std=c99 -DUSE_LIBUSB=1 -I"$(brew --prefix libusb)/include" -o spd_dump-darwin spd_dump.c \
-    "$(brew --prefix libusb)/lib/libusb-1.0.a" -framework IOKit -framework CoreFoundation -framework Security -lobjc
+echo "#define GIT_VER \"$(git rev-parse --abbrev-ref HEAD)\"" > GITVER.h
+echo "#define GIT_SHA1 \"$(git rev-parse HEAD)\"" >> GITVER.h
+cc -O2 -std=c99 -Wno-unused -DUSE_LIBUSB=1 -I"$(brew --prefix libusb)/include" -o spd_dump-darwin spd_dump.c common.c \
+    "$(brew --prefix libusb)/lib/libusb-1.0.a" -lm -lpthread -framework IOKit -framework CoreFoundation -framework Security -lobjc
 ```
 
 ---
@@ -52,4 +54,4 @@ cc -O2 -std=c99 -DUSE_LIBUSB=1 -I"$(brew --prefix libusb)/include" -o spd_dump-d
 - TheGammaSqueeze for GammaOS, [GammaOSNext](https://github.com/TheGammaSqueeze/GammaOSNext)
 - Bismoy Ghosh for Spreadtrum PAC extractor, [extractor.py](https://github.com/bismoy-bot/PAC-Extractor)
 - Ilya Kurdyukov for Spreadtrum firmware dumper/flasher, [spd_dump](https://github.com/ilyakurdyukov/spreadtrum_flash)
-- TomKing062 for Spreadtrum bootloader unlock blobs, [CVE-Repository](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader)
+- TomKing062 for the [spd_dump fork](https://github.com/TomKing062/spreadtrum_flash) used here, and Spreadtrum bootloader unlock blobs, [CVE-Repository](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader)
