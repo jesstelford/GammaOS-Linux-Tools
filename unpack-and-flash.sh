@@ -121,8 +121,10 @@ $sudo "$spd" --wait 600 \
     fdl ../unisoc-blobs/trustos_a.bin 0xbd05fe00 \
     fdl ../unisoc-blobs/teecfg_a.bin 0xbd03fe00 \
     fdl ../unisoc-blobs/sml_a.bin 0xbcfffe00 \
-    exec \
-    || { echo "Bootloader unlock failed! Not continuing." >&2; exit 1; }
+    exec
+
+# Note: the unlock exec resets the device, so spd_dump exits non-zero here
+# even on success. Don't gate on it -- the charging screen is the real signal.
 
 read -n 1 -r -s -p $'\nBootloader unlocked! Wait for your device to get to the charging screen.\nThen, please unplug your device and get ready to replug it while holding the BACK button again.\nPress any key when you are ready...\n'
 
@@ -156,8 +158,10 @@ $sudo "$spd" --wait 600 \
     e userdata \
     set_active a \
     firstmode 0 \
-    reset \
-    || { echo "Flashing failed! Re-run this script to try again." >&2; exit 1; }
+    reset
 
+# spd_dump exits non-zero after 'reset' reboots the device, so a clean run and
+# a failure look the same from here. Watch the handheld: it should reboot into
+# GammaOSNext. If it doesn't, re-run this script.
 echo
-echo "Done! Your device should now reboot into GammaOSNext."
+echo "Flash sequence sent. Your device should now reboot into GammaOSNext."
