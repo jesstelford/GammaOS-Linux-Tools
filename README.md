@@ -17,7 +17,7 @@ sudo apt install libusb-1.0-0 python3
 No extra packages are needed: `tools/spd_dump-darwin` is a universal binary with libusb built in, and `python3` comes with the Xcode Command Line Tools (`xcode-select --install`) or Homebrew.
 
 - On Apple Silicon, macOS asks *"Allow accessory to connect?"* the first time a new USB device is plugged in. The device only stays in flashing mode for a short window, so either be ready to click **Allow** immediately, or first set **System Settings → Privacy & Security → Allow accessories to connect** to *Automatically when unlocked*.
-- `sudo` is still required: macOS attaches its own driver to the device and only root can detach it.
+- Unlike Linux, macOS does **not** need `sudo`. The device's boot ROM is a vendor-specific USB device that macOS binds no driver to, so a normal user can talk to it. The script runs the flasher without `sudo` on macOS automatically — and on Apple Silicon running it under `sudo` can actually stop it from seeing the device, since the *Allow accessory* authorization belongs to your login session, not root.
 
 ---
 

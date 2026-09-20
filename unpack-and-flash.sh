@@ -92,7 +92,7 @@ else
     dtbobfile="dtbo_b.img"
 fi
 
-read -n 1 -r -s -p $'\nYou are about to be asked for your sudo password to prevent libusb permission issues.\nIf you are uncomfortable with that, close your terminal and do not proceed.\nOtherwise, get ready to plug your device into your computer while holding the BACK button on it.\nPress any key when you are ready...\n'
+read -n 1 -r -s -p $'\nOn Linux you may be asked for your sudo password to prevent libusb permission issues.\nIf you are uncomfortable with that, close your terminal and do not proceed.\nGet ready to plug your device into your computer while holding the BACK button on it.\nPress any key when you are ready...\n'
 
 cd ../tools
 
@@ -101,13 +101,20 @@ case "$(uname -s)" in
         spd=./spd_dump-darwin
         # Gatekeeper blocks quarantined binaries (e.g. when this repo was downloaded as a zip)
         xattr -d com.apple.quarantine "$spd" 2>/dev/null
+        # The boot ROM is a vendor-specific device (class 0xff), so macOS binds no
+        # driver and a normal user can claim it -- no sudo needed. Worse, on Apple
+        # Silicon the "allow accessory" authorization belongs to the console user,
+        # not root, so running under sudo can stop the process seeing the device.
+        sudo=""
         ;;
     *)
         spd=./spd_dump
+        # Linux binds cdc_acm to the device; root is needed to detach and claim it.
+        sudo="sudo"
         ;;
 esac
 
-sudo "$spd" --wait 600 \
+$sudo "$spd" --wait 600 \
     exec_addr 0x65012f48 \
     fdl ../unisoc-blobs/fdl1-boot.bin 0x65000800 \
     fdl ../unisoc-blobs/fdl2-cboot.bin 0xb4fffe00 \
@@ -119,7 +126,7 @@ sudo "$spd" --wait 600 \
 
 read -n 1 -r -s -p $'\nBootloader unlocked! Wait for your device to get to the charging screen.\nThen, please unplug your device and get ready to replug it while holding the BACK button again.\nPress any key when you are ready...\n'
 
-sudo "$spd" --wait 600 \
+$sudo "$spd" --wait 600 \
     fdl ../extracted/fdl1-dl.bin 0x65000800 \
     fdl ../extracted/fdl2-dl.bin 0xb4fffe00 \
     exec \
